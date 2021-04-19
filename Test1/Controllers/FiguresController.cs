@@ -17,7 +17,7 @@ namespace Test1.Controllers
 	{
 		private readonly ILogger<FiguresController> _logger;
 		private readonly IOrderStorage _orderStorage;
-		private readonly IFigureStorage _figureStorage;
+		private readonly IFigureStorage _figureStorage; // хранилище фигур
 
 		public FiguresController(ILogger<FiguresController> logger, IOrderStorage orderStorage, IFigureStorage figureStorage)
 		{
@@ -36,7 +36,7 @@ namespace Test1.Controllers
 				{
 					return new BadRequestResult();
 				}
-				position.Figure = await _figureStorage.GetFigureById(position.Figure.FigureId);
+				position.Figure = await _figureStorage.GetFigureById(position.Figure.FigureId); // получаем фигуру из хранилища и кладем его в заказ
 			}
 
 			var order = new Order
@@ -51,7 +51,7 @@ namespace Test1.Controllers
 
 			foreach (var position in cart.Positions)
 			{
-				FiguresStorage.Reserve(position.Figure, position.Count);
+				FiguresStorage.Reserve(position.Figure, position.Count); // резервируем резерв в Redis
 			}
 
 			var result = await _orderStorage.Save(order);
@@ -59,7 +59,7 @@ namespace Test1.Controllers
 			return new OkObjectResult(result);
 		}
 		[HttpPost]
-		public async Task<IActionResult> AddFigureToStorage()
+		public async Task<IActionResult> AddFigureToStorage() // сохраняем новую фигуру в хранилище
         {
 			try
 			{
@@ -90,7 +90,7 @@ namespace Test1.Controllers
 		}
 	}
 
-
+	//заменил тип фигуры на уникальные идентификаторы из расчета, что может быть неограниченное количество фигур указанных типов
 	internal interface IRedisClient
 	{
 		int Get(string figure_id);
@@ -109,34 +109,18 @@ namespace Test1.Controllers
 		}
 	}
 
-	public interface IPolygonAreaCalculator
-    {
-		public  float GetArea(Polygon figure);
-    }
 
-    public class CustomPolygonAreaCalculator_Ver1 : IPolygonAreaCalculator
-    {
-        public float GetArea(Polygon figure)
-        {
-            throw new NotImplementedException();
-        }
-    }
 
-	public interface IPolygonVerticesCalculator
-	{
-		public List<PointF> GetPolygonVertices(Polygon figure);
-	}
-
-    public class CustomPolygonVerticesCalculator : IPolygonVerticesCalculator
-    {
-        public List<PointF> GetPolygonVertices(Polygon figure)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
+	// позиция не должна содержать логику описания фигур, по моему мнению
     public class Position
 	{
+		/*
+		 public string Type { get; set; }
+
+		public float SideA { get; set; }
+		public float SideB { get; set; }
+		public float SideC { get; set; }
+		  */
 		public Figure Figure { get; set; }
 		public int Count { get; set; }
 	}
@@ -150,6 +134,7 @@ namespace Test1.Controllers
 	{
 		public List<Position> Positions { get; set; }
 
+		// изменил расчет заказа для под измененный класс позиций
 		public decimal GetTotal() =>
 			Positions.Select(p => p.Figure switch 
 			{
@@ -173,14 +158,14 @@ namespace Test1.Controllers
 		public abstract void Validate();
 		public abstract double GetArea();
 	}
-
+	//описание стороны многоугольника
 	public class  PolygonSide
     {
 		public float Lenght { get; set; }
 		public float Angle { get; set; }
 
     }
-
+	//Многоугольник как бизнес-логика триугольнка, квадрата и любого другого многоугольника
     public partial class Polygon : Figure
     {
 		
@@ -239,7 +224,7 @@ namespace Test1.Controllers
 		
 	}
 
-
+	//изменил класс Circle
 	public class Circle : Figure
 	{
 		public Circle(double radius)
@@ -258,6 +243,33 @@ namespace Test1.Controllers
 		{
 			if (!IsValidated) throw new Exception("Not Validated");
 			return Math.PI * Math.Pow(Radius, 2);
+		}
+	}
+
+	// интерфейс для подключения механизма расчетов площади многоугольников
+	public interface IPolygonAreaCalculator
+	{
+		public float GetArea(Polygon figure);
+	}
+
+	public class CustomPolygonAreaCalculator_Ver1 : IPolygonAreaCalculator
+	{
+		public float GetArea(Polygon figure)
+		{
+			throw new NotImplementedException();
+		}
+	}
+	// интерфейс для подключения механизма расчетов координат вершин  многоугольников на основании длин сторон многоугольника и углов между ними
+	public interface IPolygonVerticesCalculator
+	{
+		public List<PointF> GetPolygonVertices(Polygon figure);
+	}
+
+	public class CustomPolygonVerticesCalculator : IPolygonVerticesCalculator
+	{
+		public List<PointF> GetPolygonVertices(Polygon figure)
+		{
+			throw new NotImplementedException();
 		}
 	}
 	/*
@@ -301,7 +313,7 @@ namespace Test1.Controllers
 		// сохраняет оформленный заказ и возвращает сумму
 		Task<decimal> Save(Order order);
 	}
-
+	//интерфейс для хранилища фигур
 	public interface IFigureStorage
     {
 		Task UpdateOrSaveFigure(Figure figure);
