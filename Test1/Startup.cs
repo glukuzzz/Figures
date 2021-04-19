@@ -35,6 +35,7 @@ namespace Test1
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
+            services.AddTransient<Test1.Controllers.IPolygonAreaCalculator,Controllers.CustomPolygonAreaCalculator_Ver1>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
