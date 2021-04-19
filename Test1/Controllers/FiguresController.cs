@@ -173,7 +173,8 @@ namespace Test1.Controllers
 		List<PointF> PolygonVertices { get; set; }
         public override void Validate()
         {
-			
+			if(Sides.Min(x=>x.Lenght) <= 0) throw new Exception("Figure validation failed");
+
 			if (Sides.Count() == 3 )
             {
 				foreach(var t in Sides) if(t.Lenght > Sides.Sum(x=>x.Lenght)-t.Lenght) throw new InvalidOperationException("Triangle restrictions not met");
@@ -197,11 +198,9 @@ namespace Test1.Controllers
     {
 		 IPolygonAreaCalculator areaCalculator;
 		 IPolygonVerticesCalculator verticesCalculator;
-		 public Polygon(List<PolygonSide> Sides, IPolygonAreaCalculator areaCalculator, IPolygonVerticesCalculator verticesCalculator)
+		 public Polygon(List<PolygonSide> Sides)
         {
 			this.Sides = Sides;
-			this.areaCalculator = areaCalculator;
-			this.verticesCalculator = verticesCalculator;
 			Validate();
 		}
 		public override double GetArea()
