@@ -219,6 +219,7 @@ namespace Test1.Controllers
 			}
 			else
 				areaCalculator.GetArea(this);
+			validated = true;
 			throw new Exception("Something gone wrong");
 		}
 		
