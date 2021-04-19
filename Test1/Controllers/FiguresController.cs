@@ -63,7 +63,7 @@ namespace Test1.Controllers
         {
 			try
 			{
-				var guid = Guid.NewGuid();
+				var guid = "";
 				var stream = Request.Body;
 				var data = "";
 				stream.Position = 0;
@@ -74,11 +74,13 @@ namespace Test1.Controllers
 				if (data.Contains("Radius"))
 				{
 					var circle = (Circle)JsonConvert.DeserializeObject(data, typeof(Circle));
+					guid = circle.FigureId;
 					await _figureStorage.UpdateOrSaveFigure(circle);
 				}
 				else
 				{
 					var polygon = (Polygon)JsonConvert.DeserializeObject(data, typeof(Polygon));
+					guid = polygon.FigureId;
 					await _figureStorage.UpdateOrSaveFigure(polygon);
 				}
 
